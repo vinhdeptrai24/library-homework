@@ -16,6 +16,7 @@ import com.example.library.dto.ReturnResponse;
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class LoanService {
@@ -98,5 +99,18 @@ public class LoanService {
                 today,
                 lateDays,
                 fee);
+    }
+    @Transactional(readOnly = true)
+    public List<LoanResponse> getMemberLoans(Long memberId, boolean activeOnly) {
+        if (!membersRepository.existsById(memberId)) {
+            throw new NotFoundException("MEMBER_NOT_FOUND",
+                    "Không tìm thấy member id = " + memberId);
+        }
+
+        List<Loans> loans = activeOnly
+                ? loansRepository.findByMemberIdAndReturnedAtIsNull(memberId)
+                : loansRepository.findByMemberId(memberId);
+
+        return loans.stream().map(LoanResponse::from).toList();
     }
 }
